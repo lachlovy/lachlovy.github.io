@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>知识蒸馏简述 | Lachlovy&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="本文基于 Hinton 在 2015 年的论文《Distilling the Knowledge in a Neural Network》的研究并结合后续知识蒸馏技术研究整理而成。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/knowledge-distillation/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.45e028aa8ce0961349adf411b013ee39406be2c0bc80d4ea3fc04555f7f4611a.css" integrity="sha256-ReAoqozglhNJrfQRsBPuOUBr4sC8gNTqP8BFVff0YRo=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/knowledge-distillation/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Lachlovy&#39;s Blog (Alt + H)">Lachlovy&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      知识蒸馏简述
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2025-03-07 16:20:22 +0800 CST'>March 7, 2025</span>
+
+</div>
+  </header> 
+  <div class="post-content"><p>本文基于 Hinton 在 2015 年的论文《Distilling the Knowledge in a Neural Network》的研究并结合后续知识蒸馏技术研究整理而成。</p>
+<h2 id="1-背景与动机">1. 背景与动机<a hidden class="anchor" aria-hidden="true" href="#1-背景与动机">#</a></h2>
+<p>机器学习过程中，训练和部署阶段的需求不一样。在训练阶段，会从大量数据中提取数据结构，此阶段可能会非常耗时且不需要实时操作。而部署阶段对于大量用户的使用情况，通常对实时性和延迟提出了更高的要求。训练多个模型并集成，或者训练一个非常大的模型都无法满足部署阶段的要求。因此 Hinton 及 Rich Caruana 提出的方法对模型进行“压缩”，将大模型知识转移到小模型上。</p>
+<h2 id="2-温度-t">2. 温度 $T$<a hidden class="anchor" aria-hidden="true" href="#2-温度-t">#</a></h2>
+<p>神经网络使用 <code>Softmax</code> 层来将模型输出转为一个概率分布。</p>
+<p>$$q_i = \frac{exp(z_i/T)}{\sum_jexp(z_i)/T}$$</p>
+<p>此处 $T$ 是一个可调节参数，当 $T=1$ 时，则是标准 <code>softmax</code> 函数，$\sigma(\vec{z}) = \frac{exp(z_i)}{\sum^K_{j=1}exp(z_j)}$</p>
+<p>随着温度 $T$ 当增加，指数运算之后的数值之间差值变小，导致概率分布更加平滑。</p>
+<p>例如，$T = 2$ 时，$q_i=\frac{exp(z_i/2)}{\sum_jexp(z_i)/2}$</p>
+<p>对于数据分布为 <code>[0.3, 0.6, 0.1]</code> 的数据，经过指数运算后得到 <code>[1.2214, 1.8221, 1.1051]</code>。</p>
+<p>经过温度 $T$ 调节之后为 <code>[0.15, 0.3, 0.05]</code>，经过指数运算得到 <code>[1.1618, 1.3498, 1.0512]</code></p>
+<p>通过增加 $T$，概率分布更加平滑，最高概率与其他概率之间的差距变小。</p>
+<p>同理，减小温度 $T$ 会导致概率分布更加尖锐，最高概率的占比会增加，使得模型有更多“把握”选择更相信的选项。</p>
+<p>如论文中例子所说，宝马车被分类为垃圾车的概率很小，但是仍然比分类为萝卜的概率大得多。通过更大的温度设定可以放大这些非高概率项之间的关系。</p>
+<p>通过设置不同调整温度 $T$ 的值，在大语言模型生成 token 采样时，会有不同的表现。较小的温度会生成更加保守的结果，而更大的温度会生成更加多样性的结果，这对不同生成需求的任务会有不同的要求。</p>
+<h2 id="3-基础知识蒸馏方法">3. 基础知识蒸馏方法<a hidden class="anchor" aria-hidden="true" href="#3-基础知识蒸馏方法">#</a></h2>
+<p>基础知识蒸馏方法利用一个教师网络和一个学生网络，通过两个训练阶段同时进行，让学生网络（较小参数量）能够实现学习到教师网络的知识。</p>
+<h3 id="31-知识蒸馏">3.1 知识蒸馏<a hidden class="anchor" aria-hidden="true" href="#31-知识蒸馏">#</a></h3>
+<ol>
+<li>训练一个复杂的“教师”网络，可以是多个复杂模型的集成，也可以是一个巨大的网络。</li>
+<li>将教师网络产生的软标签（通过增加温度 $T$ 来“软化” <code>softmax</code>），来训练一个更简单的学生网络，使学生网络能够学习到教师网络中的&quot;暗知识&quot;（dark knowledge），包括类别之间的相似性信息。</li>
+</ol>
+<p>学生网络不仅能够学习正确的分类结果，也能学到教师网络对不同类别的置信度分布，从而在保持较好性能的同时大幅减小模型尺寸和推理成本。</p>
+<h3 id="32-实验验证">3.2 实验验证<a hidden class="anchor" aria-hidden="true" href="#32-实验验证">#</a></h3>
+<ul>
+<li>MNIST 实验</li>
+</ul>
+<p>在 MNIST 手写数字识别数据集（全部 60000 条数据）上使用不同规模的网络进行实验。</p>
+<ol>
+<li>两层 1200 个 <code>ReLU</code> 单元网络，达到 67 个测试错误数据。</li>
+<li>两层 800 个 <code>ReLU</code> 单元网络，达到 146 个测试错误数据。在此模型仅仅添加温度为 20 的蒸馏过程后，达到了 74 个测试错误数据。</li>
+</ol>
+<p>对于数据集中去掉所有包含数字 3 的图片的情况，数字 3 的出现对蒸馏模型来说是未见过的数据。尽管如此，蒸馏模型只在测试集中达到了 206 个测试错误，其中 133 个是在 1010 个数字 3 的测试集中。</p>
+<h2 id="现代知识蒸馏技术">现代知识蒸馏技术<a hidden class="anchor" aria-hidden="true" href="#现代知识蒸馏技术">#</a></h2>
+<ul>
+<li>
+<p>Response-based</p>
+<p>Hinton 提出的基础知识蒸馏方法，根据模型的输出层结果来进行蒸馏。</p>
+</li>
+<li>
+<p>Feature-based</p>
+</li>
+<li>
+<p>Relation-based</p>
+</li>
+<li>
+<p>Self-distillation</p>
+<p>不需要一个额外的教师网络，例如用更深层的网络来训练较浅层的网络。</p>
+</li>
+</ul>
+<h2 id="动态调整温度参数">动态调整温度参数<a hidden class="anchor" aria-hidden="true" href="#动态调整温度参数">#</a></h2>
+<p>传统知识蒸馏方法存在的一个不足点在于：温度参数作为一个超参数，需要人工去调整找到一个性能好的参数，即使找到一个较好的温度参数，而在学生网络学习过程中，学生学习的阶段<em>难度</em>是在变化的。</p>
+<p>而文章 <a href="https://ojs.aaai.org/index.php/AAAI/article/view/25236">Curriculum Temperature for Knowledge Distillation</a> 提出了一种由课程学习（Curriculum Learning）启发的动态调整温度的方法 Curriculum Temperature for Knowledge Distillation（CTKD）。课程学习通过组织学习任务的顺序，逐渐增加学习难度，从而提高模型的训练效果。</p>
+<p>CTKD 通过优化两点来达到动态调整温度参数：学生模型旨在最小化损失函数，而温度模块旨在最大化学生与与教师之间的蒸馏损失。</p>
+<p>CTKD 探索了两种动态调整温度的方法：</p>
+<ul>
+<li>Global-T：为所有实例预测一个温度值，计算成本低。</li>
+<li>Instance-T：为每个实例单独预测一个温度，表示能力更强，但计算成本较高。</li>
+</ul>
+<p>CTKD 可以无缝集成到现有的知识蒸馏框架中，来得到提升。</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>知识蒸馏技术在模型部署阶段意义重大，一个训练好的大神经网络模型投入到用户使用时面对模型输出速度、延迟方面表现不如小模型，通过知识蒸馏技术，小模型能够达到大模型大部分的能力，并且保持较快的计算效率。面对越来越多的小型设备（手机、个人电脑），将最前沿的模型蒸馏后部署到小型设备上也成为了一个新的方向，能够让更多人体验到人工智能给我们带来的好处。</p>
+<h2 id="参考文献">参考文献<a hidden class="anchor" aria-hidden="true" href="#参考文献">#</a></h2>
+<p>[1] Hinton, G., Vinyals, O., &amp; Dean, J. (2015). Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531.</p>
+<p>[2] Li, Z., Li, X., Yang, L., Zhao, B., Song, R., Luo, L., &hellip; &amp; Yang, J. (2023, June). Curriculum temperature for knowledge distillation. In Proceedings of the AAAI Conference on Artificial Intelligence (Vol. 37, No. 2, pp. 1504-1512).</p>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="http://localhost:1313/">Lachlovy&#39;s Blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
